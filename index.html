@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Ofícios — Delegacia de Ourém/PA</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/docx@9.0.0/build/index.js"></script>
+<style>
+:root {
+  --bg: #f4f3ef; --surface: #fff; --border: #d6d3cc; --border-light: #e8e5df;
+  --text: #1a1916; --text-muted: #6b6860; --text-faint: #9c9a94;
+  --accent: #1a3a5c; --accent-light: #e8eff7;
+  --warn: #7a4a00; --warn-bg: #fef3e0;
+  --danger: #8b1a1a; --danger-bg: #fdeaea;
+  --success: #1a5c2e; --success-bg: #e6f4ec;
+  --info: #1a3a5c; --info-bg: #e8eff7;
+  --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+  --radius: 6px; --radius-lg: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+header { background: var(--accent); color: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; border-bottom: 2px solid #0f2540; }
+header h1 { font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+header .sub { font-family: var(--mono); font-size: 10px; opacity: 0.55; margin-top: 2px; }
+.tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); background: var(--surface); padding: 0 28px; }
+.tab { padding: 12px 20px; font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; color: var(--text-muted); transition: all 0.15s; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:hover { color: var(--text); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 18px; }
+.card-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+input, select, textarea { width: 100%; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 13px; outline: none; transition: border-color 0.15s; height: 34px; }
+textarea { height: auto; padding: 8px 10px; resize: vertical; line-height: 1.6; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); background: #fff; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+.btn { height: 36px; padding: 0 18px; border-radius: var(--radius); font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; white-space: nowrap; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: #0f2540; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: transparent; color: var(--text-muted); border-color: var(--border); }
+.btn-secondary:hover { background: var(--bg); }
+.btn-success { background: var(--success); color: #fff; border-color: var(--success); }
+.btn-success:hover { background: #134d24; }
+.btn-warn { background: var(--warn-bg); color: var(--warn); border-color: #e8c880; }
+.upload-area { border: 2px dashed var(--border); border-radius: var(--radius-lg); padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); }
+.upload-area:hover, .upload-area.drag { border-color: var(--accent); background: var(--accent-light); }
+.upload-area p { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+.upload-area .icon { font-size: 32px; }
+.status-box { border-radius: var(--radius); padding: 12px 16px; font-size: 13px; margin-top: 12px; display: none; }
+.status-box.info { background: var(--info-bg); color: var(--info); border: 1px solid #b8d0e8; display: block; }
+.status-box.success { background: var(--success-bg); color: var(--success); border: 1px solid #a8d5b5; display: block; }
+.status-box.error { background: var(--danger-bg); color: var(--danger); border: 1px solid #f0b0b0; display: block; }
+.badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-family: var(--mono); font-size: 10px; font-weight: 500; }
+.badge-accent { background: var(--accent-light); color: var(--accent); }
+.badge-success { background: var(--success-bg); color: var(--success); }
+.badge-warn { background: var(--warn-bg); color: var(--warn); }
+.badge-danger { background: var(--danger-bg); color: var(--danger); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { font-family: var(--mono); font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr.clickable:hover td { background: #fafaf8; cursor: pointer; }
+.mono { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+.empty-state { text-align: center; padding: 40px; color: var(--text-faint); font-family: var(--mono); font-size: 12px; }
+.loading-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.oficio-preview { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; font-size: 12px; line-height: 1.8; white-space: pre-wrap; font-family: var(--mono); max-height: 400px; overflow-y: auto; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; align-items: flex-start; justify-content: center; padding: 32px 16px; overflow-y: auto; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius-lg); width: 100%; max-width: 820px; border: 1px solid var(--border); margin: auto; }
+.modal-header { background: var(--accent); color: #fff; padding: 14px 20px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; display: flex; align-items: center; justify-content: space-between; }
+.modal-header h2 { font-size: 14px; font-weight: 600; }
+.modal-close { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; opacity: 0.7; line-height: 1; }
+.modal-close:hover { opacity: 1; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border-light); display: flex; gap: 8px; justify-content: flex-end; }
+.operadoras-check { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.op-chip { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-size: 12px; transition: all 0.15s; background: var(--bg); }
+.op-chip input { width: auto; height: auto; margin: 0; cursor: pointer; }
+.op-chip:hover { border-color: var(--accent); background: var(--accent-light); }
+.op-chip.checked { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 500; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: #fff; padding: 10px 18px; border-radius: var(--radius); font-size: 13px; font-family: var(--mono); opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
+.toast.show { opacity: 1; }
+.toast.error { background: var(--danger); }
+.sep { height: 1px; background: var(--border-light); margin: 16px 0; }
+.act-btn { padding: 3px 9px; border-radius: var(--radius); font-size: 11px; font-family: var(--mono); cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-muted); margin-right: 3px; transition: all 0.15s; }
+.act-btn:hover { background: var(--bg); }
+.act-btn.primary { color: var(--accent); border-color: #a8c0d8; }
+.act-btn.primary:hover { background: var(--accent-light); }
+.act-btn.success { color: var(--success); border-color: #a8d5b5; }
+.act-btn.success:hover { background: var(--success-bg); }
+.act-btn.danger { color: var(--danger); border-color: #f0b0b0; }
+.act-btn.danger:hover { background: var(--danger-bg); }
+.extracted-info { background: var(--accent-light); border: 1px solid #b8d0e8; border-radius: var(--radius); padding: 10px 14px; margin-top: 10px; font-family: var(--mono); font-size: 11px; color: var(--accent); line-height: 1.8; display: none; }
+.extracted-info.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Sistema de Ofícios — Recuperação de Celulares</h1>
+    <div class="sub">Delegacia de Polícia de Ourém/PA · PCPA</div>
+  </div>
+  <div style="font-family:var(--mono);font-size:11px;opacity:0.6" id="sync-label">Pronto</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('tab-gerar', this)">📄 Gerar Ofício</div>
+  <div class="tab" onclick="showTab('tab-controle', this)">📋 Controle de Casos</div>
+</div>
+
+<!-- TAB GERAR OFÍCIO -->
+<div class="tab-content active" id="tab-gerar">
+<main>
+
+  <!-- UPLOAD BOP -->
+  <div class="card">
+    <div class="card-title">1. Carregar Boletim de Ocorrência (PDF)</div>
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('bop-file').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+      <div class="icon">📂</div>
+      <strong style="font-size:14px">Clique ou arraste o BOP em PDF</strong>
+      <p>O sistema lerá automaticamente IMEI, nº do BO, data e operadora</p>
+    </div>
+    <input type="file" id="bop-file" accept=".pdf" style="display:none" onchange="handleBOP(this.files[0])">
+    <div class="status-box" id="ocr-status"></div>
+    <div class="extracted-info" id="extracted-info"></div>
+  </div>
+
+  <!-- DADOS EXTRAÍDOS / FORMULÁRIO -->
+  <div class="card" id="form-card">
+    <div class="card-title">
+      <span>2. Dados do ofício</span>
+      <button class="btn btn-secondary" style="height:28px;font-size:11px" onclick="limparFormulario()">Limpar</button>
+    </div>
+
+    <div class="grid-4" style="margin-bottom:10px">
+      <div><label>Nº do Ofício</label><input id="num-oficio" placeholder="06/2026/RC/DPOUR/PCPA"></div>
+      <div><label>Nº do BO</label><input id="num-bo" placeholder="00190/2026.100181-5"></div>
+      <div><label>Data do Fato</label><input id="data-fato" type="date" onchange="calcJanela()"></div>
+      <div><label>Início da Janela (+1 dia)</label><input id="data-janela" type="date" readonly style="background:#f0f0ec"></div>
+    </div>
+
+    <div class="grid-4" style="margin-bottom:10px">
+      <div><label>IMEI 1</label><input id="imei1" placeholder="869396073151393"></div>
+      <div><label>IMEI 2 (opcional)</label><input id="imei2" placeholder="899396073151385"></div>
+      <div><label>Chip / Linha</label><input id="chip" placeholder="(91) 9 9962-6274"></div>
+      <div><label>Modelo do aparelho</label><input id="modelo" placeholder="REALME C61 SPARKLE GOLD"></div>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <label>Operadoras destinatárias</label>
+      <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;text-transform:none;letter-spacing:0;color:var(--text-muted)">
+        <input type="checkbox" id="todas-op" onchange="toggleTodas(this)" style="width:auto;height:auto"> Selecionar todas
+      </label>
+      <div class="operadoras-check" id="op-list"></div>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <label>Observações adicionais (opcional)</label>
+      <textarea id="obs-oficio" rows="2" placeholder="Informações complementares para o ofício..."></textarea>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-secondary" onclick="previewOficio()">👁 Pré-visualizar</button>
+      <button class="btn btn-success" onclick="gerarDocx()" id="btn-gerar">⬇ Baixar DOCX</button>
+      <button class="btn btn-primary" onclick="salvarCaso()" id="btn-salvar">💾 Salvar no controle</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="card" id="preview-card" style="display:none">
+    <div class="card-title">Pré-visualização do ofício</div>
+    <div class="oficio-preview" id="preview-text"></div>
+  </div>
+
+</main>
+</div>
+
+<!-- TAB CONTROLE -->
+<div class="tab-content" id="tab-controle">
+<main>
+  <div class="card">
+    <div class="card-title">Casos registrados</div>
+    <div id="controle-wrap"><div class="empty-state">Carregando...</div></div>
+  </div>
+</main>
+</div>
+
+<!-- MODAL DETALHES DO CASO -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Detalhes do caso</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
+      <button class="btn btn-warn" onclick="replicarOficio()">📄 Gerar novo ofício</button>
+      <button class="btn btn-primary" onclick="saveModalData()" id="btn-modal-save">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+const SUPABASE_URL = 'https://fogdqgmherjtimewxjze.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvZ2RxZ21oZXJqdGltZXd4anplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMDI2OTAsImV4cCI6MjA5Mjg3ODY5MH0.SSsiolofgHIj2iWcja0omET1p25NDmqNZnTH5vhdbP8';
+const API = SUPABASE_URL + '/rest/v1';
+const H = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ─── OPERADORAS ────────────────────────────────────────────
+const OPERADORAS = [
+  'Claro S.A', 'Telefônica Brasil (Vivo)', 'TIM Brasil S.A',
+  'Correios Celular', 'Algar Telecom', 'Oi S.A', 'Nextel',
+  'Sercomtel', 'Porto Seguro Conecta', 'Ligga Telecom',
+  'Sky (AT&T)', 'Brisanet', 'Vivo Empresas', 'Claro Empresas',
+  'Ligue Telecom', 'Nuvem Telecom', 'Surf Telecom', 'WOM'
+];
+
+function renderOperadoras() {
+  const el = document.getElementById('op-list');
+  el.innerHTML = OPERADORAS.map((op, i) => `
+    <label class="op-chip" id="chip-${i}" onclick="toggleChip(${i})">
+      <input type="checkbox" id="op-${i}" value="${op}" onchange="syncTodas()"> ${op}
+    </label>`).join('');
+}
+
+function toggleChip(i) {
+  const cb = document.getElementById('op-' + i);
+  cb.checked = !cb.checked;
+  document.getElementById('chip-' + i).className = 'op-chip' + (cb.checked ? ' checked' : '');
+  syncTodas();
+}
+
+function toggleTodas(el) {
+  OPERADORAS.forEach((_, i) => {
+    const cb = document.getElementById('op-' + i);
+    cb.checked = el.checked;
+    document.getElementById('chip-' + i).className = 'op-chip' + (el.checked ? ' checked' : '');
+  });
+}
+
+function syncTodas() {
+  const all = OPERADORAS.every((_, i) => document.getElementById('op-' + i).checked);
+  document.getElementById('todas-op').checked = all;
+}
+
+function getOperadorasSel() {
+  return OPERADORAS.filter((_, i) => document.getElementById('op-' + i).checked);
+}
+
+// ─── TABS ──────────────────────────────────────────────────
+function showTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'tab-controle') loadCasos();
+}
+
+// ─── DRAG/DROP ─────────────────────────────────────────────
+function dragOver(e) { e.preventDefault(); document.getElementById('upload-area').classList.add('drag'); }
+function dragLeave() { document.getElementById('upload-area').classList.remove('drag'); }
+function dropFile(e) { e.preventDefault(); dragLeave(); handleBOP(e.dataTransfer.files[0]); }
+
+// ─── LEITURA DO BOP (PARSER LOCAL — sem chamada a API externa) ─────────────
+async function handleBOP(file) {
+  if (!file || file.type !== 'application/pdf') {
+    showStatus('Envie um arquivo PDF válido.', 'error');
+    return;
+  }
+  showStatus('Lendo o PDF...', 'info');
+  try {
+    const text = await extractPDFText(file);
+    if (!text || text.trim().length < 50) {
+      showStatus('PDF sem texto selecionável. Verifique se o BOP não é uma imagem escaneada.', 'error');
+      return;
+    }
+    const dados = parseLocalBOP(text);
+    preencherFormulario(dados);
+
+    // Mostrar resumo do que foi extraído
+    const encontrados = [];
+    if (dados.num_bo)    encontrados.push('BO: ' + dados.num_bo);
+    if (dados.data_fato) encontrados.push('Fato: ' + dados.data_fato.split('-').reverse().join('/'));
+    if (dados.imei1)     encontrados.push('IMEI 1: ' + dados.imei1);
+    if (dados.imei2)     encontrados.push('IMEI 2: ' + dados.imei2);
+    if (dados.chip)      encontrados.push('Chip: ' + dados.chip);
+    if (dados.modelo)    encontrados.push('Aparelho: ' + dados.modelo);
+
+    if (encontrados.length > 0) {
+      document.getElementById('extracted-info').textContent = '✓ Extraído: ' + encontrados.join(' · ');
+      document.getElementById('extracted-info').classList.add('show');
+      showStatus('BOP lido com sucesso! Confira os campos abaixo e ajuste se necessário.', 'success');
+    } else {
+      showStatus('PDF lido, mas nenhum dado foi reconhecido automaticamente. Preencha os campos manualmente.', 'error');
+    }
+  } catch(e) {
+    console.error(e);
+    showStatus('Erro ao processar o PDF: ' + e.message, 'error');
+  }
+}
+
+async function extractPDFText(file) {
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    // Junta os itens preservando espaços e quebras de linha
+    let lastY = null;
+    for (const item of content.items) {
+      if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+        text += '\n';
+      }
+      text += item.str;
+      if (item.hasEOL) text += '\n';
+      lastY = item.transform[5];
+    }
+    text += '\n';
+  }
+  return text;
+}
+
+// ─── PARSER LOCAL DO BOP (PCPA) ───────────────────────────
+function parseLocalBOP(text) {
+  const dados = {};
+
+  // Número do BO — formatos: 00190/2026.100181-5 ou similares
+  const boMatch = text.match(/N[uú]mero\s*[:\s]+([0-9]{4,6}\/[0-9]{4}\.[0-9]+-[0-9]+)/i)
+                || text.match(/N[uú]mero\s*[:\s]+([\d]{4,6}\/[\d\.]+[-\d]+)/i);
+  if (boMatch) dados.num_bo = boMatch[1].trim();
+
+  // Data do fato — "13/04/2026 09:00:00" ou "13/04/2026"
+  const dataMatch = text.match(/Data\s+e\s+hora\s+do\s+Fato[:\s\n]+(\d{2})\/(\d{2})\/(\d{4})/i)
+                  || text.match(/Data\s+do\s+Fato[:\s\n]+(\d{2})\/(\d{2})\/(\d{4})/i);
+  if (dataMatch) dados.data_fato = `${dataMatch[3]}-${dataMatch[2]}-${dataMatch[1]}`;
+
+  // IMEI 1 — "IMEI 1: 869396073151393" ou "IMEI1: ..."
+  // O BOP da PCPA escreve "IMEI 1: XXXXXXXXXXXXXXX e IMEI 2:"
+  const imei1Match = text.match(/IMEI\s*1\s*[:\s]+(\d{14,16})/i);
+  if (imei1Match) dados.imei1 = imei1Match[1].trim();
+
+  // IMEI 2
+  const imei2Match = text.match(/IMEI\s*2\s*[:\s]+(\d{14,16})/i);
+  if (imei2Match) dados.imei2 = imei2Match[1].trim();
+
+  // Chip / linha — "(91) 9 9962-6274"
+  const chipMatch = text.match(/linha\s+de\s+n[uú]mero\s+(\(?\d{2}\)?\s*\d[\d\s\-]{6,14})/i)
+                  || text.match(/chip\s+de\s+linha[^(]*\(?\s*(\(?\d{2}\)?\s*\d[\d\s\-]{6,14})/i)
+                  || text.match(/n[uú]mero\s+\((\d{2})\)\s*([\d\s\-]+)/i);
+  if (chipMatch) {
+    // Limpa e normaliza o número
+    const raw = chipMatch[1] ? chipMatch[1].trim() : `(${chipMatch[1]}) ${chipMatch[2]}`.trim();
+    dados.chip = raw.replace(/\s+/g, ' ').trim();
+  }
+
+  // Modelo — "marca REALME, modelo C61, referência RMX3930, na cor SPARKLE GOLD"
+  const modeloMatch = text.match(/marca\s+([\wÀ-ÿ]+)[,\s]+modelo\s+([\w\d\-]+)(?:[,\s]+referência\s+([\w\d\-]+))?(?:[,\s]+(?:na\s+)?cor\s+([\wÀ-ÿ\s]+?))?(?:[,\s]|\.|\bportando|\bcom chip)/i);
+  if (modeloMatch) {
+    const partes = [modeloMatch[1], modeloMatch[2]];
+    if (modeloMatch[3]) partes.push(modeloMatch[3]);
+    if (modeloMatch[4]) partes.push(modeloMatch[4].trim());
+    dados.modelo = partes.join(' ').toUpperCase();
+  } else {
+    // Fallback simples: pega marca + modelo
+    const m2 = text.match(/marca\s+([\w]+)[,\s]+modelo\s+([\w\d\-]+)/i);
+    if (m2) dados.modelo = (m2[1] + ' ' + m2[2]).toUpperCase();
+  }
+
+  return dados;
+}
+
+function preencherFormulario(dados) {
+  if (dados.num_bo)    document.getElementById('num-bo').value = dados.num_bo;
+  if (dados.data_fato) { document.getElementById('data-fato').value = dados.data_fato; calcJanela(); }
+  if (dados.imei1)     document.getElementById('imei1').value = dados.imei1;
+  if (dados.imei2)     document.getElementById('imei2').value = dados.imei2;
+  if (dados.chip)      document.getElementById('chip').value = dados.chip;
+  if (dados.modelo)    document.getElementById('modelo').value = dados.modelo;
+}
+
+function calcJanela() {
+  const fato = document.getElementById('data-fato').value;
+  if (!fato) return;
+  const d = new Date(fato + 'T12:00:00');
+  d.setDate(d.getDate() + 1);
+  document.getElementById('data-janela').value = d.toISOString().split('T')[0];
+}
+
+function limparFormulario() {
+  ['num-oficio','num-bo','data-fato','data-janela','imei1','imei2','chip','modelo','obs-oficio'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  OPERADORAS.forEach((_, i) => {
+    document.getElementById('op-' + i).checked = false;
+    document.getElementById('chip-' + i).className = 'op-chip';
+  });
+  document.getElementById('todas-op').checked = false;
+  document.getElementById('preview-card').style.display = 'none';
+  document.getElementById('extracted-info').classList.remove('show');
+  document.getElementById('bop-file').value = '';
+  showStatus('', '');
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('ocr-status');
+  el.textContent = msg;
+  el.className = 'status-box ' + (type || '');
+  if (!msg) el.style.display = 'none';
+}
+
+// ─── GERAÇÃO DO OFÍCIO ────────────────────────────────────
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function fmtDate(d) {
+  if (!d) return '';
+  const [y,m,dd] = d.split('-');
+  return dd+'/'+m+'/'+y;
+}
+
+function fmtDateLong(d) {
+  if (!d) d = today();
+  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const days = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  const dt = new Date(d + 'T12:00:00');
+  return `${days[dt.getDay()]}, ${dt.getDate()} de ${months[dt.getMonth()]} de ${dt.getFullYear()}`;
+}
+
+function getFormData() {
+  return {
+    numOficio: document.getElementById('num-oficio').value.trim() || 'XX/2026/RC/DPOUR/PCPA',
+    numBo: document.getElementById('num-bo').value.trim(),
+    dataFato: document.getElementById('data-fato').value,
+    dataJanela: document.getElementById('data-janela').value,
+    imei1: document.getElementById('imei1').value.trim(),
+    imei2: document.getElementById('imei2').value.trim(),
+    chip: document.getElementById('chip').value.trim(),
+    modelo: document.getElementById('modelo').value.trim(),
+    obs: document.getElementById('obs-oficio').value.trim(),
+    operadoras: getOperadorasSel()
+  };
+}
+
+function gerarTextoOficio(d, dataDoc) {
+  const ops = d.operadoras.length > 0 ? d.operadoras.join(' / ') : '[OPERADORA]';
+  const imei2linha = d.imei2 ? `\n\tB) IMEI 2: ${d.imei2}` : '';
+  const janela = d.dataJanela ? fmtDate(d.dataJanela) : '[DATA DA JANELA]';
+  const boRef = d.numBo ? `BOP nº ${d.numBo}` : '[Nº DO BO]';
+
+  return `POLÍCIA CIVIL DO ESTADO DO PARÁ
+SUPERINTENDÊNCIA REGIONAL DO CAETÉ-6ªRISP
+DELEGACIA DE POLÍCIA DE OURÉM
+
+\tOFÍCIO Nº ${d.numOficio}
+
+\t\t\t\t\t\tOURÉM-PA, ${fmtDateLong(dataDoc)}.
+
+\tA (o) Senhor (a)
+\tGerente/Diretor(a)
+\t${ops}
+
+\t${boRef}
+
+Assunto: Solicitação de dados cadastrais e CHIPs vinculados.
+
+Prezado(a) Senhor(a),
+
+\tDESPACHO: A recusa no recebimento deste implicará identificação do recusante, havendo intimação imediata para comparecimento à Delegacia, informando-se superior hierárquico. CONDUÇÃO: Havendo recusa, novamente, de informação da qualificação do primeiro ou primeira servidor(a) ou funcionário(a) deste local em face do recebimento deste ofício será, também, passível de prisão criminal em face do crime de desobediência, de acordo com o art. 330, do Código Penal, além da prática do art. 68, do Decreto-Lei nº 3.688/1941 – Lei das Contravenções Penais – recusa de dados sobre a própria identificação ou qualificação.
+
+\t1. Incide o presente ato sobre as atribuições de Polícia Judiciária, conforme o art. 144, §§ 1º e 4º da Constituição Federal, ex vi arts. 3º, 4º, 5º, 6º, todos do Código de Processo Penal, c/c art. 2º, § 2º da Lei 12.830/13, c/c art. 17-B, da Lei 12.683/12.
+
+\t2. Há expediente investigativo para a caracterização de prática criminosa onde se objetiva a constituição de autoria e materialidade delitiva mediante coalescimento de informações para complementar a atividade em tela.
+
+\t3. Cediça a inexistência de proteção legal por sigilo de dados cadastrais e informação de numerais em si mesmos considerados, de acordo com o conteúdo legislativo acima demonstrado e a manifestação da jurisprudência dominante. (STF.Pleno.RE nº 418.416-8; STF, MS 23452/RJ; RTJ 179/225, 270; TRF 1ªRegião. 3ª Turma. HC nº 2007.01.00.003265-4/DF).
+
+\t4. Consoante os motivos expostos e, reconhecido legalmente o poder conferido à Polícia Judiciária de obter exclusivamente as informações cadastrais e numerais cadastrados, os quais informam a qualificação pessoal, filiação e endereço, além de numerais cadastrados junto às operadoras de telefonia móvel, independente de ordem judicial, mantidas pelas empresas telefônicas, instituições financeiras, provedores de internet, administradora de cartão de crédito e Justiça Eleitoral (art. 17-B, da lei 12.683/12), REQUISITO a Vossa Senhoria, ou seu substituto que, NO PRAZO MÁXIMO DE 24 HORAS, formalize o envio e a entrega dos NUMERAIS/CHIPS VINCULADOS AOS IMEIS INFRAMENCIONADOS E QUE TENHAM UTILIZADO A REDE DE COMUNICAÇÃO DA OPERADORA DE TELEFONIA, NO PERÍODO DE ${janela} ATÉ A DATA DE RESPOSTA DESTA REQUISIÇÃO, BEM COMO OS CADASTROS DOS NUMERAIS/CHIPS CADASTRADOS NO PERÍODO SOLICITADO:
+
+\tA) IMEI 1: ${d.imei1 || '[IMEI 1]'}${imei2linha}
+${d.chip ? `\n\tCHIP/LINHA: ${d.chip}` : ''}
+${d.modelo ? `\tAparelho: ${d.modelo}` : ''}
+${d.obs ? `\n\tObs.: ${d.obs}` : ''}
+
+\t5. Por fim, os dados de cadastro deverão ser enviados para o e-mail funcional da autoridade policial requisitante ourem@policiacivil.pa.gov.br.
+
+\t6. A possível renitência em cumprir esta requisição poderá gerar responsabilidade penal em face da prática dos crimes de prevaricação e/ou desobediência com infração das disposições legais, como bem destacam os arts. 319 e 330, do Código Penal.
+
+\tAtenciosamente,
+
+
+
+MARCUS ROGÉRIO FONSECA PINTO
+DELEGADO DE OURÉM
+DELEGACIA DE POLÍCIA CIVIL – OURÉM
+POLÍCIA CIVIL DO ESTADO DO PARÁ
+
+Delegacia de Polícia de OURÉM/PA – Rua São Francisco, Bairro Souza – CEP 68.640-000.
+E-mail: ourem@policiacivil.pa.gov.br – Telefone: 91 98562-0224`;
+}
+
+function previewOficio() {
+  const d = getFormData();
+  const txt = gerarTextoOficio(d, today());
+  document.getElementById('preview-text').textContent = txt;
+  document.getElementById('preview-card').style.display = 'block';
+  document.getElementById('preview-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ─── DOCX ─────────────────────────────────────────────────
+async function gerarDocx() {
+  const d = getFormData();
+  if (!d.imei1) { toast('Informe pelo menos o IMEI 1.', true); return; }
+  const btn = document.getElementById('btn-gerar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spin"></span> Gerando...';
+
+  try {
+    const { Document, Packer, Paragraph, TextRun, AlignmentType, UnderlineType } = docx;
+
+    const bold   = (text, extra={}) => new TextRun({ text, bold: true, font: 'Arial', size: 24, ...extra });
+    const normal = (text, extra={}) => new TextRun({ text, font: 'Arial', size: 24, ...extra });
+    const italic = (text, extra={}) => new TextRun({ text, italics: true, font: 'Arial', size: 24, ...extra });
+
+    const p = (children, align=AlignmentType.JUSTIFIED, spacing={after:120}) =>
+      new Paragraph({ children, alignment: align, spacing });
+
+    const pIndent = (children, align=AlignmentType.JUSTIFIED) =>
+      new Paragraph({ children, alignment: align, spacing: { after: 120 }, indent: { left: 720 } });
+
+    const ops = d.operadoras.length > 0 ? d.operadoras.join(' / ') : '[OPERADORA]';
+    const janela = d.dataJanela ? fmtDate(d.dataJanela) : '[DATA DA JANELA]';
+
+    const docChildren = [
+      // Cabeçalho centralizado
+      p([bold('POLÍCIA CIVIL DO ESTADO DO PARÁ')], AlignmentType.CENTER, {after:0}),
+      p([bold('SUPERINTENDÊNCIA REGIONAL DO CAETÉ-6ªRISP')], AlignmentType.CENTER, {after:0}),
+      p([bold('DELEGACIA DE POLÍCIA DE OURÉM')], AlignmentType.CENTER, {after:240}),
+
+      // Número do ofício
+      pIndent([normal('OFÍCIO Nº '), bold(d.numOficio)]),
+      p([]),
+
+      // Data (alinhada à direita)
+      new Paragraph({
+        children: [normal(`OURÉM-PA, ${fmtDateLong(today())}.`)],
+        alignment: AlignmentType.RIGHT,
+        spacing: {after:240}
+      }),
+
+      // Destinatário
+      pIndent([normal('A (o) Senhor (a)')]),
+      pIndent([normal('Gerente/Diretor(a)')]),
+      pIndent([bold(ops)]),
+      p([]),
+      pIndent([normal('BOP nº '), bold(d.numBo || '[Nº DO BO]')]),
+      p([]),
+
+      // Assunto
+      p([bold('Assunto: '), normal('Solicitação de dados cadastrais e CHIPs vinculados.')]),
+      p([]),
+      p([normal('Prezado(a) Senhor(a),')]),
+      p([]),
+
+      // Despacho em itálico
+      pIndent([italic('DESPACHO: A recusa no recebimento deste implicará identificação do recusante, havendo intimação imediata para comparecimento à Delegacia, informando-se superior hierárquico. CONDUÇÃO: Havendo recusa, novamente, de informação da qualificação do primeiro ou primeira servidor(a) ou funcionário(a) deste local em face do recebimento deste ofício será, também, passível de prisão criminal em face do crime de desobediência, de acordo com o art. 330, do Código Penal, além da prática do art. 68, do Decreto-Lei nº 3.688/1941 – Lei das Contravenções Penais – recusa de dados sobre a própria identificação ou qualificação.')]),
+      p([]),
+
+      // Itens 1-3
+      pIndent([normal('1. Incide o presente ato sobre as atribuições de Polícia Judiciária, conforme o art. 144, §§ 1º e 4º da Constituição Federal, '), italic('ex vi'), normal(' arts. 3º, 4º, 5º, 6º, todos do Código de Processo Penal, c/c art. 2º, § 2º da Lei 12.830/13, c/c art. 17-B, da Lei 12.683/12.')]),
+      p([]),
+      pIndent([normal('2. Há expediente investigativo para a caracterização de prática criminosa onde se objetiva a constituição de autoria e materialidade delitiva mediante coalescimento de informações para complementar a atividade em tela.')]),
+      p([]),
+      pIndent([normal('3. Cediça a inexistência de proteção legal por sigilo de dados cadastrais e informação de numerais em si mesmos considerados, de acordo com o conteúdo legislativo acima demonstrado e a manifestação da jurisprudência dominante. (STF.Pleno.RE nº 418.416-8; STF, MS 23452/RJ; RTJ 179/225, 270; TRF 1ªRegião. 3ª Turma. HC nº 2007.01.00.003265-4/DF).')]),
+      p([]),
+
+      // Item 4 com destaques em negrito
+      pIndent([
+        normal('4. Consoante os motivos expostos e, reconhecido legalmente o poder conferido à Polícia Judiciária de obter exclusivamente as informações cadastrais e numerais cadastrados, os quais informam a '),
+        bold('qualificação pessoal, filiação e endereço, além de numerais cadastrados junto às operadoras de telefonia móvel, independente de ordem judicial'),
+        normal(', mantidas pelas empresas telefônicas, instituições financeiras, provedores de '),
+        italic('internet'),
+        normal(', administradora de cartão de crédito e Justiça Eleitoral (art. 17-B, da lei 12.683/12), '),
+        bold('REQUISITO'),
+        normal(' a Vossa Senhoria, ou seu substituto que, '),
+        bold('NO PRAZO MÁXIMO DE 24 HORAS'),
+        normal(', formalize o envio e a entrega dos '),
+        bold('NUMERAIS/CHIPS VINCULADOS AOS IMEIS INFRAMENCIONADOS E QUE TENHAM UTILIZADO A REDE DE COMUNICAÇÃO DA OPERADORA DE TELEFONIA, NO PERÍODO DE '),
+        bold(janela, { underline: { type: UnderlineType.SINGLE } }),
+        bold(' ATÉ A DATA DE RESPOSTA DESTA REQUISIÇÃO, BEM COMO OS CADASTROS DOS NUMERAIS/CHIPS CADASTRADOS NO PERÍODO SOLICITADO:'),
+      ]),
+      p([]),
+
+      // IMEIs
+      pIndent([bold('A) IMEI 1: '), bold(d.imei1 || '[IMEI 1]')]),
+      ...(d.imei2  ? [pIndent([bold('B) IMEI 2: '), bold(d.imei2)])] : []),
+      ...(d.chip   ? [pIndent([normal('CHIP/LINHA: '), normal(d.chip)])] : []),
+      ...(d.modelo ? [pIndent([normal('Aparelho: '), normal(d.modelo)])] : []),
+      ...(d.obs    ? [p([]), pIndent([italic('Obs.: ' + d.obs)])] : []),
+      p([]),
+
+      // Itens 5-6
+      pIndent([normal('5. Por fim, os dados de cadastro deverão ser enviados para o e-mail funcional da autoridade policial requisitante '), bold('ourem@policiacivil.pa.gov.br'), normal('.')]),
+      p([]),
+      pIndent([normal('6. A possível renitência em cumprir esta requisição poderá gerar responsabilidade penal em face da prática dos crimes de '), bold('prevaricação e/ou desobediência'), normal(' com infração das disposições legais, como bem destacam os '), bold('arts. 319 e 330, do Código Penal.')]),
+      p([]),
+      pIndent([normal('Atenciosamente,')]),
+      p([]), p([]), p([]),
+
+      // Assinatura
+      p([bold('MARCUS ROGÉRIO FONSECA PINTO')], AlignmentType.LEFT, {after:0}),
+      p([bold('DELEGADO DE OURÉM')], AlignmentType.LEFT, {after:0}),
+      p([bold('DELEGACIA DE POLÍCIA CIVIL – OURÉM')], AlignmentType.LEFT, {after:0}),
+      p([bold('POLÍCIA CIVIL DO ESTADO DO PARÁ')], AlignmentType.LEFT, {after:240}),
+
+      // Rodapé
+      p([italic('Delegacia de Polícia de OURÉM/PA – Rua São Francisco, Bairro Souza – CEP 68.640-000.')], AlignmentType.CENTER, {after:0}),
+      p([italic('E-mail: ourem@policiacivil.pa.gov.br – Telefone: 91 98562-0224')], AlignmentType.CENTER, {after:0}),
+    ];
+
+    const documento = new Document({
+      sections: [{
+        properties: {
+          page: {
+            size: { width: 11906, height: 16838 },
+            margin: { top: 1134, right: 1134, bottom: 1134, left: 1701 }
+          }
+        },
+        children: docChildren
+      }]
+    });
+
+    const buffer = await Packer.toBuffer(documento);
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Oficio_${d.numOficio.replace(/\//g,'-')}_${(d.numBo||'sem-bo').replace(/[\/\.]/g,'-')}.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('DOCX gerado com sucesso!');
+  } catch(e) {
+    toast('Erro ao gerar DOCX: ' + e.message, true);
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬇ Baixar DOCX';
+  }
+}
+
+// ─── SUPABASE — CASOS ─────────────────────────────────────
+let casos = [];
+let casoAtual = null;
+
+async function salvarCaso() {
+  const d = getFormData();
+  if (!d.numBo) { toast('Informe o nº do BO.', true); return; }
+  const btn = document.getElementById('btn-salvar');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    const payload = {
+      bo: d.numBo,
+      num_oficio: d.numOficio,
+      imei: d.imei1,
+      imei2: d.imei2 || null,
+      chip: d.chip || null,
+      modelo: d.modelo || null,
+      operadora: d.operadoras.join(' | ') || 'Não informada',
+      data_envio: today(),
+      data_janela: d.dataJanela || null,
+      data_fato: d.dataFato || null,
+      prazo: 1,
+      obs: d.obs || null,
+      respondido: false
+    };
+    const r = await fetch(API + '/oficios', { method: 'POST', headers: H, body: JSON.stringify(payload) });
+    if (!r.ok) throw new Error(await r.text());
+    toast('Caso salvo no controle!');
+  } catch(e) { toast('Erro ao salvar: ' + e.message, true); }
+  finally { btn.disabled = false; btn.textContent = '💾 Salvar no controle'; }
+}
+
+async function loadCasos() {
+  document.getElementById('controle-wrap').innerHTML = '<div class="empty-state">Carregando...</div>';
+  try {
+    const r = await fetch(API + '/oficios?order=created_at.desc', { headers: H });
+    if (!r.ok) throw new Error();
+    casos = await r.json();
+    document.getElementById('sync-label').textContent = 'Sincronizado';
+    renderCasos();
+  } catch(e) {
+    document.getElementById('controle-wrap').innerHTML = '<div class="empty-state">Erro ao carregar. Verifique conexão.</div>';
+    document.getElementById('sync-label').textContent = 'Sem conexão';
+  }
+}
+
+function renderCasos() {
+  if (casos.length === 0) {
+    document.getElementById('controle-wrap').innerHTML = '<div class="empty-state">Nenhum caso registrado ainda.</div>';
+    return;
+  }
+  document.getElementById('controle-wrap').innerHTML = `<table>
+    <thead><tr>
+      <th>Nº Ofício</th><th>BO</th><th>IMEI 1</th><th>Operadora(s)</th>
+      <th>Envio</th><th>Janela</th><th>Status</th><th>Obs.</th><th>Ações</th>
+    </tr></thead>
+    <tbody>${casos.map(c => {
+      const st = c.frutifero === true ? 'Frutífero' : c.frutifero === false ? 'Infrutífero' : c.respondido ? 'Respondido' : 'Aguardando';
+      const badge = st === 'Frutífero' ? 'badge-success' : st === 'Infrutífero' ? 'badge-danger' : st === 'Respondido' ? 'badge-accent' : 'badge-warn';
+      return `<tr class="clickable" onclick="abrirCaso(${c.id})">
+        <td class="mono">${c.num_oficio || '—'}</td>
+        <td><strong>${c.bo}</strong></td>
+        <td class="mono">${c.imei}</td>
+        <td style="font-size:11px">${(c.operadora||'').split(' | ').map(o=>`<span class="badge badge-accent" style="margin:1px">${o}</span>`).join('')}</td>
+        <td class="mono">${fmtDate(c.data_envio)}</td>
+        <td class="mono">${c.data_janela ? fmtDate(c.data_janela) : '—'}</td>
+        <td><span class="badge ${badge}">${st}</span></td>
+        <td style="font-size:11px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.obs||'—'}</td>
+        <td onclick="event.stopPropagation()">
+          <button class="act-btn primary" onclick="abrirCaso(${c.id})">Abrir</button>
+          <button class="act-btn danger" onclick="deletarCaso(${c.id})">Excluir</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+async function deletarCaso(id) {
+  if (!confirm('Remover este caso permanentemente?')) return;
+  try {
+    await fetch(API + '/oficios?id=eq.' + id, { method: 'DELETE', headers: H });
+    toast('Caso removido.');
+    loadCasos();
+  } catch(e) { toast('Erro ao remover.', true); }
+}
+
+function abrirCaso(id) {
+  casoAtual = casos.find(c => c.id === id);
+  if (!casoAtual) return;
+  const c = casoAtual;
+  document.getElementById('modal-title').textContent = 'Caso: ' + c.bo;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="grid-3" style="margin-bottom:10px">
+      <div><label>Nº do Ofício</label><input id="mc-num-oficio" value="${c.num_oficio||''}"></div>
+      <div><label>Nº do BO</label><input id="mc-bo" value="${c.bo}"></div>
+      <div><label>Data de envio</label><input id="mc-data-envio" type="date" value="${c.data_envio||''}"></div>
+    </div>
+    <div class="grid-4" style="margin-bottom:10px">
+      <div><label>IMEI 1</label><input id="mc-imei1" value="${c.imei}"></div>
+      <div><label>IMEI 2</label><input id="mc-imei2" value="${c.imei2||''}"></div>
+      <div><label>Chip / Linha</label><input id="mc-chip" value="${c.chip||''}"></div>
+      <div><label>Modelo</label><input id="mc-modelo" value="${c.modelo||''}"></div>
+    </div>
+    <div style="margin-bottom:10px">
+      <label>Operadoras</label>
+      <input id="mc-operadora" value="${c.operadora||''}" placeholder="Ex: Claro S.A | TIM Brasil S.A">
+    </div>
+    <div style="margin-bottom:10px">
+      <label>Janela de requisição (início)</label>
+      <input id="mc-janela" type="date" value="${c.data_janela||''}">
+    </div>
+    <div style="margin-bottom:10px">
+      <label>Observações (editável a qualquer tempo)</label>
+      <textarea id="mc-obs" rows="3">${c.obs||''}</textarea>
+    </div>
+    <div class="sep"></div>
+    <div style="margin-bottom:6px"><label>Resultado</label></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn ${c.frutifero===true?'btn-success':'btn-secondary'}" id="mc-frut" onclick="setResultado(true)">✓ Frutífero</button>
+      <button class="btn ${c.frutifero===false?'btn-warn':'btn-secondary'}" id="mc-infrut" onclick="setResultado(false)">✗ Infrutífero</button>
+      <button class="btn btn-secondary" onclick="setResultado(null)">Pendente</button>
+    </div>
+    ${c.receptador_nome ? `<div class="sep"></div><div style="font-size:12px;color:var(--success)">Receptador: ${c.receptador_nome} · CPF: ${c.receptador_cpf||'—'}</div>` : ''}
+  `;
+  window._modalFrutifero = c.frutifero;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function setResultado(val) {
+  window._modalFrutifero = val;
+  document.getElementById('mc-frut').className = 'btn ' + (val === true ? 'btn-success' : 'btn-secondary');
+  document.getElementById('mc-infrut').className = 'btn ' + (val === false ? 'btn-warn' : 'btn-secondary');
+}
+
+async function saveModalData() {
+  if (!casoAtual) return;
+  const btn = document.getElementById('btn-modal-save');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    const payload = {
+      num_oficio: document.getElementById('mc-num-oficio').value.trim(),
+      bo: document.getElementById('mc-bo').value.trim(),
+      imei: document.getElementById('mc-imei1').value.trim(),
+      imei2: document.getElementById('mc-imei2').value.trim() || null,
+      chip: document.getElementById('mc-chip').value.trim() || null,
+      modelo: document.getElementById('mc-modelo').value.trim() || null,
+      operadora: document.getElementById('mc-operadora').value.trim() || null,
+      data_envio: document.getElementById('mc-data-envio').value || null,
+      data_janela: document.getElementById('mc-janela').value || null,
+      obs: document.getElementById('mc-obs').value.trim() || null,
+      frutifero: window._modalFrutifero !== undefined ? window._modalFrutifero : null,
+      respondido: window._modalFrutifero !== null && window._modalFrutifero !== undefined
+    };
+    const r = await fetch(API + '/oficios?id=eq.' + casoAtual.id, { method: 'PATCH', headers: H, body: JSON.stringify(payload) });
+    if (!r.ok) throw new Error();
+    toast('Alterações salvas.');
+    closeModal();
+    loadCasos();
+  } catch(e) { toast('Erro ao salvar.', true); }
+  finally { btn.disabled = false; btn.textContent = 'Salvar alterações'; }
+}
+
+function replicarOficio() {
+  if (!casoAtual) return;
+  const c = casoAtual;
+  closeModal();
+  // Muda para aba de geração
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-gerar').classList.add('active');
+  document.querySelectorAll('.tab')[0].classList.add('active');
+
+  setTimeout(() => {
+    document.getElementById('num-bo').value = c.bo;
+    document.getElementById('num-oficio').value = '';  // limpa para novo número
+    document.getElementById('imei1').value = c.imei || '';
+    document.getElementById('imei2').value = c.imei2 || '';
+    document.getElementById('chip').value = c.chip || '';
+    document.getElementById('modelo').value = c.modelo || '';
+    document.getElementById('obs-oficio').value = c.obs || '';
+    if (c.data_janela) document.getElementById('data-janela').value = c.data_janela;
+    if (c.data_fato) document.getElementById('data-fato').value = c.data_fato;
+    // Marcar operadoras
+    const ops = (c.operadora || '').split(' | ');
+    OPERADORAS.forEach((op, i) => {
+      const checked = ops.includes(op);
+      document.getElementById('op-' + i).checked = checked;
+      document.getElementById('chip-' + i).className = 'op-chip' + (checked ? ' checked' : '');
+    });
+    document.getElementById('extracted-info').classList.remove('show');
+    syncTodas();
+    toast('Dados carregados. Informe o novo nº do ofício e baixe o DOCX.');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 100);
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); casoAtual = null; }
+function closeModalOut(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 3200);
+}
+
+// ─── INIT ──────────────────────────────────────────────────
+renderOperadoras();
+</script>
+</body>
+</html>
