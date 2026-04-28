@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Ofícios Automáticos</title>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
+<script src="https://unpkg.com/docx@7.7.0/build/index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f4f4f4;
+  padding: 20px;
+}
+h2 { margin-bottom: 10px; }
+.box {
+  background: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+input, select, button {
+  padding: 6px;
+  margin: 5px 0;
+}
+button {
+  cursor: pointer;
+  background: #1a3a5c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+}
+button:hover { background: #0f2540; }
+</style>
+</head>
+
+<body>
+
+<h2>📄 Gerador Automático de Ofícios</h2>
+
+<div class="box">
+  <h3>1. Upload do BO</h3>
+  <input type="file" id="pdf" accept="application/pdf">
+  <button onclick="processar()">Ler BO (OCR)</button>
+</div>
+
+<div class="box">
+  <h3>2. Dados extraídos</h3>
+  BO: <input id="bo"><br>
+  IMEI 1: <input id="imei1"><br>
+  IMEI 2: <input id="imei2"><br>
+  Data do fato: <input id="dataFato" type="date"><br>
+</div>
+
+<div class="box">
+  <h3>3. Configuração do Ofício</h3>
+  Nº Ofício: <input id="numero" placeholder="06/2026"><br>
+
+  Operadora:
+  <select id="operadora">
+    <option>Todas</option>
+    <option>Claro S.A</option>
+    <option>Telefonica Brasil (Vivo)</option>
+    <option>TIM Brasil</option>
+    <option>Oi</option>
+    <option>Correios Celular</option>
+    <option>Algar Telecom</option>
+    <option>Sercomtel</option>
+    <option>Datora</option>
+    <option>Surf Telecom</option>
+  </select><br>
+
+  Observações:
+  <input id="obs" style="width:300px">
+</div>
+
+<div class="box">
+  <button onclick="gerar()">📄 Gerar Ofício</button>
+</div>
+
+<script>
+/* 🔥 COLE SEUS DADOS DO SUPABASE AQUI */
+const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
+const SUPABASE_KEY = "SUA-CHAVE-AQUI";
+
+/* OCR */
+async function processar() {
+  const file = document.getElementById("pdf").files[0];
+  if (!file) return alert("Envie o PDF");
+
+  alert("Processando OCR... pode levar alguns segundos");
+
+  const { data: { text } } = await Tesseract.recognize(file, 'por');
+
+  const imeis = text.match(/\b\d{15}\b/g);
+  const bo = text.match(/\d{5}\/\d{4}\.\d+/);
+  const data = text.match(/\d{2}\/\d{2}\/\d{4}/);
+
+  document.getElementById("imei1").value = imeis?.[0] || "";
+  document.getElementById("imei2").value = imeis?.[1] || "";
+  document.getElementById("bo").value = bo?.[0] || "";
+
+  if (data) {
+    const [d,m,y] = data[0].split("/");
+    document.getElementById("dataFato").value = `${y}-${m}-${d}`;
+  }
+
+  alert("OCR concluído!");
+}
+
+/* Data +1 dia */
+function diaSeguinte(data) {
+  const d = new Date(data);
+  d.setDate(d.getDate() + 1);
+  return d.toLocaleDateString('pt-BR');
+}
+
+/* Texto do ofício */
+function gerarTexto(op) {
+  const bo = document.getElementById("bo").value;
+  const imei1 = document.getElementById("imei1").value;
+  const imei2 = document.getElementById("imei2").value;
+  const numero = document.getElementById("numero").value;
+  const dataFato = document.getElementById("dataFato").value;
+
+  const inicio = diaSeguinte(dataFato);
+
+  return `
+OFÍCIO Nº ${numero}/RC/DPOUR/PCPA
+
+OURÉM-PA, ${new Date().toLocaleDateString('pt-BR')}.
+
+BOP nº ${bo}
+
+REQUISITO envio dos dados cadastrais e chips vinculados:
+
+IMEI 1: ${imei1}
+IMEI 2: ${imei2}
+
+PERÍODO: ${inicio} até a data da resposta.
+
+OPERADORA: ${op}
+`;
+}
+
+/* Gerar DOCX */
+async function gerar() {
+  const op = document.getElementById("operadora").value;
+
+  let lista = [];
+
+  if (op === "Todas") {
+    lista = [
+      "Claro S.A",
+      "Telefonica Brasil",
+      "TIM Brasil",
+      "Oi",
+      "Correios Celular",
+      "Algar Telecom"
+    ];
+  } else {
+    lista = [op];
+  }
+
+  for (let operadora of lista) {
+    const texto = gerarTexto(operadora);
+
+    const doc = new docx.Document({
+      sections: [{
+        children: texto.split("\n").map(l => new docx.Paragraph(l))
+      }]
+    });
+
+    const blob = await docx.Packer.toBlob(doc);
+    saveAs(blob, `oficio_${operadora}.docx`);
+
+    await salvarSupabase(operadora);
+  }
+
+  alert("Ofícios gerados e salvos!");
+}
+
+/* Salvar no Supabase */
+async function salvarSupabase(operadora) {
+  await fetch(SUPABASE_URL + "/rest/v1/oficios", {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      bo: document.getElementById("bo").value,
+      imei: document.getElementById("imei1").value,
+      imei2: document.getElementById("imei2").value,
+      operadora: operadora,
+      data_envio: new Date().toISOString(),
+      prazo: 10,
+      obs: document.getElementById("obs").value,
+      numero_oficio: document.getElementById("numero").value,
+      data_fato: document.getElementById("dataFato").value
+    })
+  });
+}
+</script>
+
+</body>
+</html>
